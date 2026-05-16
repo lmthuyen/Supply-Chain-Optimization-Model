@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports of All Sorts - Logistics Terminal</title>
+    
+    <!-- FIX: Switched to jsdelivr, a more reliable and less-blocked CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/javascript-lp-solver@0.4.24/prod/solver.js"></script>
+    
+    <!-- Bold Typography from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #050505;
+            --grid-color: #111a22;
+            --text-main: #00F0FF;
+            --text-muted: #4a6b7c;
+            --accent-pink: #FF003C;
+            --accent-yellow: #FFE600;
+            --border-color: #00F0FF;
+            --panel-bg: rgba(0, 20, 30, 0.85);
+            --font-display: 'Orbitron', sans-serif;
+            --font-mono: 'Share Tech Mono', monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            background-color: var(--bg-color);
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 30px 30px;
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            font-size: 15px;
+            line-height: 1.4;
+        }
+
+        /* Glitch Title Effect */
+        h1 {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin: 0 0 30px 0;
+            text-shadow: 2px 2px 0px var(--accent-pink), -2px -2px 0px var(--accent-yellow);
+            border-bottom: 2px solid var(--text-main);
+            padding-bottom: 15px;
+        }
+
+        h2, h3 {
+            font-family: var(--font-display);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent-yellow);
+        }
+
+        h2 { font-size: 1.5rem; border-bottom: 1px dashed var(--accent-yellow); padding-bottom: 8px; margin-top: 0;}
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.1), inset 0 0 20px rgba(0, 240, 255, 0.05);
+            backdrop-filter: blur(4px);
+        }
+
+        .full-width { grid-column: 1 / -1; }
+
+        /* Cyberpunk Buttons */
+        .toolbar { display: flex; gap: 20px; margin-bottom: 20px; }
+        
+        button {
+            font-family: var(--font-display);
+            font-size: 14px;
+            padding: 12px 25px;
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--text-main);
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 5px rgba(0, 240, 255, 0.2);
+        }
+
+        button:hover {
+            background: var(--text-main);
+            color: var(--bg-color);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+        }
+
+        .btn-optimize {
+            background: var(--accent-pink);
+            color: white;
+            border-color: var(--accent-pink);
+            box-shadow: 0 0 10px rgba(255, 0, 60, 0.4);
+        }
+        .btn-optimize:hover {
+            background: transparent;
+            color: var(--accent-pink);
+            box-shadow: 0 0 20px rgba(255, 0, 60, 0.8);
+        }
+
+        /* Brutalist Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        th, td {
+            padding: 10px;
+            border: 1px solid var(--text-muted);
+            text-align: left;
+        }
+
+        th {
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--text-main);
+        }
+
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            background: transparent;
+            border: 1px solid transparent;
+            border-bottom: 1px dashed var(--text-main);
+            color: var(--accent-yellow);
+            font-family: var(--font-mono);
+            font-size: 14px;
+            padding: 5px;
+            transition: all 0.3s;
+        }
+
+        input[type="text"] { color: var(--text-main); font-weight: bold; }
+        input:focus { outline: none; border: 1px solid var(--accent-yellow); background: rgba(255, 230, 0, 0.1); }
+
+        /* Results & Analysis */
+        .results-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+        
+        .result-box {
+            border: 1px solid var(--text-muted);
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .cost-display {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            color: var(--accent-pink);
+            text-shadow: 0 0 10px rgba(255, 0, 60, 0.5);
+            margin: 10px 0;
+        }
+
+        .route-log {
+            max-height: 180px;
+            overflow-y: auto;
+            border-top: 1px dashed var(--text-muted);
+            padding-top: 10px;
+        }
+
+        .log-entry { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .log-entry span:last-child { color: var(--accent-yellow); }
+
+        .recommendation {
+            border: 2px solid var(--accent-yellow);
+            padding: 20px;
+            background: rgba(255, 230, 0, 0.05);
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+            display: none;
+            animation: pulse 2s infinite;
+        }
+
+        .error-msg {
+            border: 2px solid var(--accent-pink);
+            background: rgba(255, 0, 60, 0.1);
+            color: var(--accent-pink);
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+            font-weight: bold;
+        }
+
+        /* Canvas */
+        #canvas-wrapper {
+            width: 100%;
+            height: 500px;
+            border: 1px solid var(--text-main);
+            background: #020202;
+            position: relative;
+        }
+        canvas { width: 100%; height: 100%; }
+
+        .view-controls { display: flex; gap: 10px; margin-bottom: 15px; }
+        .view-btn { padding: 5px 15px; font-size: 12px; }
+        .view-btn.active { background: var(--text-main); color: var(--bg-color); }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 230, 0, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 230, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 230, 0, 0); }
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--text-main); }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-grid">
+    <div class="full-width">
+        <h1>SYS.OPT // Sports of All Sorts</h1>
+        <div class="toolbar">
+            <button onclick="loadDefaults()">[ INIT DEFAULTS ]</button>
+            <button class="btn-optimize" onclick="runOptimization()">[ EXECUTE SOLVER ]</button>
+            <button onclick="resetApp()">[ PURGE DATA ]</button>
+        </div>
+        <div id="error-box" class="error-msg"></div>
+    </div>
+
+    <!-- DATA INPUT TERMINAL -->
+    <div class="panel">
+        <h2>NETWORK PARAMETERS</h2>
+        
+        <h3>1. Production Nodes (Factories)</h3>
+        <table id="tbl-factories">
+            <tr><th>NODE ID</th><th>MAX CAPACITY (Units/Wk)</th></tr>
+            <tr><td><input type="text" id="name-f1" value="Detroit" oninput="syncLabels()"></td><td><input type="number" id="cap-f1"></td></tr>
+            <tr><td><input type="text" id="name-f2" value="Los Angeles" oninput="syncLabels()"></td><td><input type="number" id="cap-f2"></td></tr>
+            <tr><td><input type="text" id="name-f3" value="Austin" oninput="syncLabels()"></td><td><input type="number" id="cap-f3"></td></tr>
+        </table>
+
+        <h3>2. Routing Hubs (Distribution Centers)</h3>
+        <table id="tbl-dcs">
+            <tr><th>HUB ID</th><th>BASE THROUGHPUT</th></tr>
+            <tr><td><input type="text" id="name-d1" value="Iowa" oninput="syncLabels()"> <span style="color:var(--accent-pink); font-size:10px;">[EXPANSION TARGET]</span></td><td><input type="number" id="cap-d1"></td></tr>
+            <tr><td><input type="text" id="name-d2" value="Maryland" oninput="syncLabels()"></td><td><input type="number" id="cap-d2"></td></tr>
+            <tr><td><input type="text" id="name-d3" value="Idaho" oninput="syncLabels()"></td><td><input type="number" id="cap-d3"></td></tr>
+            <tr><td><input type="text" id="name-d4" value="Arkansas" oninput="syncLabels()"></td><td><input type="number" id="cap-d4"></td></tr>
+        </table>
+
+        <h3>3. Endpoints (Retailers)</h3>
+        <table id="tbl-retailers">
+            <tr><th>ENDPOINT ID</th><th>REQUIRED DEMAND</th></tr>
+            <tr><td><input type="text" id="name-r1" value="Just Sports" oninput="syncLabels()"></td><td><input type="number" id="dem-r1"></td></tr>
+            <tr><td><input type="text" id="name-r2" value="Sports N Stuff" oninput="syncLabels()"></td><td><input type="number" id="dem-r2"></td></tr>
+            <tr><td><input type="text" id="name-r3" value="Sports Dude" oninput="syncLabels()"></td><td><input type="number" id="dem-r3"></td></tr>
+        </table>
+
+        <h3>4. Freight Matrix (Factory -> DC)</h3>
+        <table id="tbl-cost-f2d">
+            <tr><th>SRC \ DST</th><th class="lbl-d1">Iowa</th><th class="lbl-d2">Maryland</th><th class="lbl-d3">Idaho</th><th class="lbl-d4">Arkansas</th></tr>
+            <tr><td class="lbl-f1">Detroit</td><td><input type="number" id="c-f1-d1"></td><td><input type="number" id="c-f1-d2"></td><td><input type="number" id="c-f1-d3"></td><td><input type="number" id="c-f1-d4"></td></tr>
+            <tr><td class="lbl-f2">Los Angeles</td><td><input type="number" id="c-f2-d1"></td><td><input type="number" id="c-f2-d2"></td><td><input type="number" id="c-f2-d3"></td><td><input type="number" id="c-f2-d4"></td></tr>
+            <tr><td class="lbl-f3">Austin</td><td><input type="number" id="c-f3-d1"></td><td><input type="number" id="c-f3-d2"></td><td><input type="number" id="c-f3-d3"></td><td><input type="number" id="c-f3-d4"></td></tr>
+        </table>
+
+        <h3>5. Fulfillment Matrix (DC -> Retailer)</h3>
+        <table id="tbl-cost-d2r">
+            <tr><th>SRC \ DST</th><th class="lbl-r1">Just Sports</th><th class="lbl-r2">Sports N Stuff</th><th class="lbl-r3">Sports Dude</th></tr>
+            <tr><td class="lbl-d1">Iowa</td><td><input type="number" id="c-d1-r1"></td><td><input type="number" id="c-d1-r2"></td><td><input type="number" id="c-d1-r3"></td></tr>
+            <tr><td class="lbl-d2">Maryland</td><td><input type="number" id="c-d2-r1"></td><td><input type="number" id="c-d2-r2"></td><td><input type="number" id="c-d2-r3"></td></tr>
+            <tr><td class="lbl-d3">Idaho</td><td><input type="number" id="c-d3-r1"></td><td><input type="number" id="c-d3-r2"></td><td><input type="number" id="c-d3-r3"></td></tr>
+            <tr><td class="lbl-d4">Arkansas</td><td><input type="number" id="c-d4-r1"></td><td><input type="number" id="c-d4-r2"></td><td><input type="number" id="c-d4-r3"></td></tr>
+        </table>
+    </div>
+
+    <!-- ANALYTICS TERMINAL -->
+    <div class="panel">
+        <h2>ANALYSIS REPORT</h2>
+        
+        <div class="results-container">
+            <div class="result-box">
+                <h3>[SCENARIO A] BASELINE</h3>
+                <div style="font-size: 11px; color: var(--text-muted);">CURRENT CAPACITY LIMITS</div>
+                <div class="cost-display" id="res-base-cost">$0.00</div>
+                <div class="route-log" id="res-base-routes">Awaiting calculation...</div>
+            </div>
+            <div class="result-box">
+                <h3>[SCENARIO B] EXPANSION</h3>
+                <div style="font-size: 11px; color: var(--text-muted);"><span class="lbl-d1">IOWA</span> CAP: 800 (INC. $800 FIXED COST)</div>
+                <div class="cost-display" id="res-exp-cost">$0.00</div>
+                <div class="route-log" id="res-exp-routes">Awaiting calculation...</div>
+            </div>
+        </div>
+
+        <div class="recommendation" id="recommendation-box">
+            <!-- Strategic recommendation populated via JS -->
+        </div>
+
+        <h2 style="display: flex; justify-content: space-between; align-items: center;">
+            NETWORK TOPOLOGY
+            <div class="view-controls" id="toggle-container" style="display: none;">
+                <button class="view-btn active" id="btn-view-base" onclick="switchTopologyView('baseline')">BASE</button>
+                <button class="view-btn" id="btn-view-exp" onclick="switchTopologyView('expansion')">EXP</button>
+            </div>
+        </h2>
+        
+        <div id="canvas-wrapper">
+            <canvas id="networkCanvas"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    // System Constants based on PDF assignment
+    const DEFAULT_DATA = {
+        cap: { f1: 350, f2: 350, f3: 700, d1: 500, d2: 500, d3: 500, d4: 500 },
+        dem: { r1: 200, r2: 500, r3: 650 },
+        costs_f2d: {
+            f1: { d1: 25, d2: 25, d3: 35, d4: 40 },
+            f2: { d1: 35, d2: 45, d3: 35, d4: 42.5 },
+            f3: { d1: 40, d2: 40, d3: 42.5, d4: 32.5 }
+        },
+        costs_d2r: {
+            d1: { r1: 30, r2: 27.5, r3: 30 },
+            d2: { r1: 20, r2: 32.5, r3: 40 },
+            d3: { r1: 35, r2: 40, r3: 32.5 },
+            d4: { r1: 27.5, r2: 25, r3: 42.5 }
+        }
+    };
+
+    let activeSolutions = { baseline: null, expansion: null };
+    let activeCanvasView = 'baseline';
+
+    // Utility fetchers
+    function setVal(id, val) { document.getElementById(id).value = val; }
+    
+    // Safely parse input to prevent NaN crashes in solver
+    function getNum(id) { 
+        let val = parseFloat(document.getElementById(id).value);
+        return isNaN(val) ? 0 : val;
+    }
+
+    // Safely get name labels
+    function getLabel(id) { 
+        let el = document.getElementById(id);
+        return el ? el.value : 'UNKNOWN_NODE'; 
+    }
+
+    // Synchronize UI headers when names are edited
+    function syncLabels() {
+        const keys = ['f1','f2','f3','d1','d2','d3','d4','r1','r2','r3'];
+        keys.forEach(k => {
+            const labelStr = document.getElementById(`name-${k}`).value;
+            document.querySelectorAll(`.lbl-${k}`).forEach(el => el.innerText = labelStr);
+        });
+        if(activeSolutions.baseline) renderTopology(activeCanvasView);
+    }
+
+    function loadDefaults() {
+        document.getElementById('name-f1').value = "Detroit";
+        document.getElementById('name-f2').value = "Los Angeles";
+        document.getElementById('name-f3').value = "Austin";
+        document.getElementById('name-d1').value = "Iowa";
+        document.getElementById('name-d2').value = "Maryland";
+        document.getElementById('name-d3').value = "Idaho";
+        document.getElementById('name-d4').value = "Arkansas";
+        document.getElementById('name-r1').value = "Just Sports";
+        document.getElementById('name-r2').value = "Sports N Stuff";
+        document.getElementById('name-r3').value = "Sports Dude";
+
+        setVal('cap-f1', DEFAULT_DATA.cap.f1); setVal('cap-f2', DEFAULT_DATA.cap.f2); setVal('cap-f3', DEFAULT_DATA.cap.f3);
+        setVal('cap-d1', DEFAULT_DATA.cap.d1); setVal('cap-d2', DEFAULT_DATA.cap.d2); setVal('cap-d3', DEFAULT_DATA.cap.d3); setVal('cap-d4', DEFAULT_DATA.cap.d4);
+        setVal('dem-r1', DEFAULT_DATA.dem.r1); setVal('dem-r2', DEFAULT_DATA.dem.r2); setVal('dem-r3', DEFAULT_DATA.dem.r3);
+
+        const factories = ['f1', 'f2', 'f3']; 
+        const dcs = ['d1', 'd2', 'd3', 'd4']; 
+        const retailers = ['r1', 'r2', 'r3'];
+        
+        factories.forEach(f => dcs.forEach(d => setVal(`c-${f}-${d}`, DEFAULT_DATA.costs_f2d[f][d])));
+        dcs.forEach(d => retailers.forEach(r => setVal(`c-${d}-${r}`, DEFAULT_DATA.costs_d2r[d][r])));
+        
+        syncLabels();
+        resetResults();
+        clearCanvas();
+        hideSysError();
+    }
+
+    function resetApp() {
+        document.querySelectorAll('input[type="number"]').forEach(input => input.value = '');
+        resetResults();
+        clearCanvas();
+        hideSysError();
+    }
+
+    function resetResults() {
+        document.getElementById('res-base-cost').innerText = '$0.00';
+        document.getElementById('res-exp-cost').innerText = '$0.00';
+        document.getElementById('res-base-routes').innerHTML = 'Awaiting calculation...';
+        document.getElementById('res-exp-routes').innerHTML = 'Awaiting calculation...';
+        document.getElementById('recommendation-box').style.display = 'none';
+        document.getElementById('toggle-container').style.display = 'none';
+        activeSolutions = { baseline: null, expansion: null };
+    }
+
+    function showSysError(msg) {
+        const errBox = document.getElementById('error-box');
+        errBox.innerHTML = `<strong>[SYSTEM FAULT]</strong> ${msg}`;
+        errBox.style.display = 'block';
+    }
+
+    function hideSysError() {
+        document.getElementById('error-box').style.display = 'none';
+    }
+
+    // Core validation to prevent infeasible logic
+    function validateDataIntegrity() {
+        if (typeof solver === 'undefined' && typeof window.solver === 'undefined') {
+            showSysError("SOLVER LIBRARY OFFLINE. Your network or adblocker is blocking the CDN (jsdelivr.net). Please whitelist jsdelivr.net or check your internet connection.");
+            return false;
+        }
+
+        let totalFactoryCap = getNum('cap-f1') + getNum('cap-f2') + getNum('cap-f3');
+        let totalDemand = getNum('dem-r1') + getNum('dem-r2') + getNum('dem-r3');
+        
+        if (totalDemand === 0) {
+            showSysError("TOTAL DEMAND ZERO. Parameters required to proceed.");
+            return false;
+        }
+        if (totalFactoryCap < totalDemand) {
+            showSysError(`INSUFFICIENT PRODUCTION. Supply (${totalFactoryCap}) cannot fulfill Demand (${totalDemand}).`);
+            return false;
+        }
+        return true;
+    }
+
+    // Constructs the mathematical model for the LP Solver
+    function buildMathModel(iowaCapacityLimit) {
+        let model = { optimize: "cost", opType: "min", constraints: {}, variables: {} };
+        const F_NODES = ['f1', 'f2', 'f3'];
+        const D_NODES = ['d1', 'd2', 'd3', 'd4'];
+        const R_NODES = ['r1', 'r2', 'r3'];
+
+        // Apply Constraints
+        F_NODES.forEach(f => model.constraints[`limit_${f}`] = { max: getNum(`cap-${f}`) });
+        R_NODES.forEach(r => model.constraints[`req_${r}`] = { equal: getNum(`dem-${r}`) });
+        
+        D_NODES.forEach(d => {
+            let limit = (d === 'd1') ? iowaCapacityLimit : getNum(`cap-${d}`);
+            model.constraints[`limit_${d}`] = { max: limit };
+            model.constraints[`flowbal_${d}`] = { equal: 0 };
+        });
+
+        // Setup Routing Variables
+        F_NODES.forEach(f => {
+            D_NODES.forEach(d => {
+                let routeName = `${f}_to_${d}`;
+                model.variables[routeName] = {
+                    cost: getNum(`c-${f}-${d}`),
+                    [`limit_${f}`]: 1,
+                    [`limit_${d}`]: 1,
+                    [`flowbal_${d}`]: 1
+                };
+            });
+        });
+
+        D_NODES.forEach(d => {
+            R_NODES.forEach(r => {
+                let routeName = `${d}_to_${r}`;
+                model.variables[routeName] = {
+                    cost: getNum(`c-${d}-${r}`),
+                    [`req_${r}`]: 1,
+                    [`flowbal_${d}`]: -1
+                };
+            });
+        });
+
+        return model;
+    }
+
+    function runOptimization() {
+        hideSysError();
+        if (!validateDataIntegrity()) return;
+
+        try {
+            // Baseline 
+            let modelBase = buildMathModel(getNum('cap-d1'));
+            let solBase = solver.Solve(modelBase);
+            
+            // Expansion (Hardcode Iowa DC to 800 per requirements)
+            let modelExp = buildMathModel(800); 
+            let solExp = solver.Solve(modelExp);
+
+            if (!solBase.feasible) {
+                showSysError("BASELINE NETWORK INFEASIBLE. Hub throughput cannot satisfy endpoints.");
+                return;
+            }
+            if (!solExp.feasible) {
+                showSysError("EXPANSION NETWORK INFEASIBLE. Verify routing parameters.");
+                return;
+            }
+
+            // Scenario Analysis Math ($800 amortized cost added)
+            let expTotalCost = solExp.result + 800; 
+            
+            activeSolutions.baseline = solBase;
+            activeSolutions.expansion = solExp;
+
+            renderOutputPanel('base', solBase, solBase.result);
+            renderOutputPanel('exp', solExp, expTotalCost);
+
+            // Print Recommendation
+            const recBox = document.getElementById('recommendation-box');
+            recBox.style.display = 'block';
+            let targetDCName = getLabel('name-d1');
+            
+            if (expTotalCost < solBase.result) {
+                let savings = solBase.result - expTotalCost;
+                recBox.innerHTML = `> <strong>STRATEGIC DIRECTIVE: EXPAND ${targetDCName.toUpperCase()}</strong><br>Expansion minimizes network cost. Net weekly savings: <strong>$${savings.toLocaleString()}</strong> (Fixed expansion costs accounted for).`;
+                recBox.style.borderColor = "var(--text-main)";
+                recBox.style.color = "var(--text-main)";
+            } else {
+                let loss = expTotalCost - solBase.result;
+                recBox.innerHTML = `> <strong>STRATEGIC DIRECTIVE: MAINTAIN BASELINE</strong><br>Expansion of ${targetDCName.toUpperCase()} is inefficient. It introduces a <strong>$${loss.toLocaleString()}</strong> weekly deficit compared to baseline routing.`;
+                recBox.style.borderColor = "var(--accent-pink)";
+                recBox.style.color = "var(--accent-pink)";
+            }
+            
+            document.getElementById('toggle-container').style.display = 'flex';
+            switchTopologyView('baseline');
+
+        } catch (err) {
+            showSysError("ALGORITHM PANIC. Invalid constraints parsed.");
+            console.error(err);
+        }
+    }
+
+    function renderOutputPanel(prefix, solution, totalCost) {
+        document.getElementById(`res-${prefix}-cost`).innerText = `$${totalCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        
+        let routesHTML = '';
+        for (const [key, value] of Object.entries(solution)) {
+            // Filter out system keys (feasible, bounded, result)
+            if (key.includes("_to_") && value > 0) {
+                // FIXED CRASH: Using array destructuring bypasses markdown issues
+                let [partOrigin, partDest] = key.split('_to_');
+                
+                let originLabel = getLabel('name-' + partOrigin);
+                let destLabel = getLabel('name-' + partDest);
+                
+                routesHTML += `<div class="log-entry"><span>> ${originLabel} ➔ ${destLabel}</span> <span>[ ${value} UNITS ]</span></div>`;
+            }
+        }
+        document.getElementById(`res-${prefix}-routes`).innerHTML = routesHTML;
+    }
+
+    // HTML5 Canvas Visualization Engine
+    const canvas = document.getElementById('networkCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    function clearCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function switchTopologyView(viewKey) {
+        activeCanvasView = viewKey;
+        document.getElementById('btn-view-base').classList.toggle('active', viewKey === 'baseline');
+        document.getElementById('btn-view-exp').classList.toggle('active', viewKey === 'expansion');
+        renderTopology(viewKey);
+    }
+
+    function renderTopology(scenarioKey) {
+        let solution = activeSolutions[scenarioKey];
+        if (!solution) return;
+
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+        clearCanvas();
+
+        const w = canvas.width;
+        const h = canvas.height;
+
+        const nodes = {
+            f: ['f1', 'f2', 'f3'],
+            d: ['d1', 'd2', 'd3', 'd4'],
+            r: ['r1', 'r2', 'r3']
+        };
+
+        const positions = {};
+        const getY = (arr, i) => (h / (arr.length + 1)) * (i + 1);
+
+        // Assign Coordinates
+        nodes.f.forEach((id, i) => positions[id] = {x: w * 0.15, y: getY(nodes.f, i), label: getLabel(`name-${id}`), tag: 'FAC'});
+        nodes.d.forEach((id, i) => positions[id] = {x: w * 0.50, y: getY(nodes.d, i), label: getLabel(`name-${id}`), tag: 'HUB'});
+        nodes.r.forEach((id, i) => positions[id] = {x: w * 0.85, y: getY(nodes.r, i), label: getLabel(`name-${id}`), tag: 'RET'});
+
+        // Render Lines First
+        ctx.lineCap = 'butt';
+        
+        const drawLink = (origin, dest, flow) => {
+            const p1 = positions[origin];
+            const p2 = positions[dest];
+            const isActive = flow > 0;
+            
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            // Cyberpunk sharp angular routing lines instead of soft curves
+            ctx.lineTo(p1.x + 60, p1.y);
+            ctx.lineTo(p2.x - 60, p2.y);
+            ctx.lineTo(p2.x, p2.y);
+            
+            if (isActive) {
+                ctx.strokeStyle = '#00F0FF';
+                ctx.lineWidth = Math.min(8, Math.max(2, flow / 50));
+                ctx.setLineDash([]);
+                ctx.stroke();
+                
+                // Flow Badge
+                const midX = (p1.x + p2.x)/2;
+                const midY = (p1.y + p2.y)/2;
+                
+                ctx.fillStyle = '#050505';
+                ctx.fillRect(midX - 25, midY - 12, 50, 24);
+                ctx.strokeStyle = '#FFE600';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(midX - 25, midY - 12, 50, 24);
+
+                ctx.fillStyle = '#FFE600';
+                ctx.font = 'bold 12px "Share Tech Mono"';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(flow, midX, midY);
+
+            } else {
+                ctx.strokeStyle = '#111a22';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([6]);
+                ctx.stroke();
+            }
+        };
+
+        nodes.f.forEach(f => nodes.d.forEach(d => drawLink(f, d, solution[`${f}_to_${d}`] || 0)));
+        nodes.d.forEach(d => nodes.r.forEach(r => drawLink(d, r, solution[`${d}_to_${r}`] || 0)));
+
+        ctx.setLineDash([]);
+
+        // Render Nodes (Sci-fi Rectangles)
+        for (const [id, pos] of Object.entries(positions)) {
+            ctx.fillStyle = '#050505';
+            ctx.strokeStyle = '#00F0FF';
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            ctx.rect(pos.x - 15, pos.y - 15, 30, 30);
+            ctx.fill();
+            ctx.stroke();
+
+            // Inner Core
+            ctx.fillStyle = '#FF003C';
+            ctx.fillRect(pos.x - 5, pos.y - 5, 10, 10);
+
+            // Typography
+            ctx.fillStyle = '#00F0FF';
+            ctx.font = 'bold 14px "Orbitron"';
+            ctx.textAlign = 'center';
+            ctx.fillText(pos.label.toUpperCase(), pos.x, pos.y + 35);
+            
+            ctx.fillStyle = '#4a6b7c';
+            ctx.font = '10px "Share Tech Mono"';
+            ctx.fillText(`[${pos.tag}]`, pos.x, pos.y + 50);
+        }
+    }
+
+    // Auto-Initialize System
+    window.onload = () => {
+        loadDefaults();
+        window.addEventListener('resize', () => {
+            if(activeSolutions.baseline) renderTopology(activeCanvasView);
+        });
+    };
+</script>
+
+</body>
+</html>

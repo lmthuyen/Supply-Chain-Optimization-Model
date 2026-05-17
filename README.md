@@ -18,3 +18,9 @@ A single-file, browser-based supply chain optimization app built with vanilla HT
 
 **Validated Against:**
 * Sports of All Sorts skateboard distribution network: **3 factories; 4 distribution centers; 3 retailers** (expansion scenario analysis included)
+
+<img width="1920" height="826" alt="Screenshot 2026-05-16 at 9 37 47 PM" src="https://github.com/user-attachments/assets/4e48da09-8d72-4bd7-8d37-b8b2ab0b4744" />
+<img width="1920" height="959" alt="Screenshot 2026-05-16 at 9 34 54 PM" src="https://github.com/user-attachments/assets/16793d6b-15eb-4c7f-9354-26621273a184" />
+
+
+

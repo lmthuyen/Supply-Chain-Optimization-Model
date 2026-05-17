@@ -1,6 +1,6 @@
 # Supply Chain Optimization Model
-## Supply Chain Network Optimizer — Browser-Based Distribution Tool
-A single-file, browser-based supply chain optimization app built with vanilla HTML, CSS, and JavaScript. Developed as part of a Decision Models course project (BANA 4095), this app models and solves a multi-stage distribution problem entirely in the browser — no installation or backend required.
+## Supply Chain Network Optimizer - Browser-Based Distribution Tool
+A single-file, browser-based supply chain optimization app built with vanilla HTML, CSS, and JavaScript. Developed as part of a Decision Models course project (BANA 4095), this app models and solves a multi-stage distribution problem entirely in the browser - no installation or backend required.
 
 **Features:**
 * Solves minimum-cost distribution across a 3-stage supply chain (Factories → DCs → Retailers)
